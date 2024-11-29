@@ -1,0 +1,51 @@
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.h-100-vh {
+  min-height: 100vh;
+}
+
+.bg-2 {
+  background-color: #D9D9D9;
+}
+.bg-light-color {
+  background-color: #F2F2F2;
+}
+.bg-accent-color {
+  background: #3D0B37;
+}
+.bg-blackk {
+  background-color: #0C090D;
+}
+.border-escura {
+  border: #A4A4A4 1px solid;
+}
+
+.w-90 {
+  width: 90%;
+}
+.w-80 {
+  width: 80%;
+}
+.w-70 {
+  width: 70%;
+}
+.w-60 {
+  width: 60%;
+}
+.w-40 {
+  width: 40%;
+}
+.w-30 {
+  width: 30%;
+}
+
+.message-input {
+  resize: none;                
+  overflow-wrap: break-word;
+  outline: none;
+}
