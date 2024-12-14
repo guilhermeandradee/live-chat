@@ -2,6 +2,7 @@ package com.projects.livechatms.controller;
 
 import com.projects.livechatms.DTOs.ChatMessage;
 import com.projects.livechatms.DTOs.ObjectResponse;
+import com.projects.livechatms.DTOs.UserColorDTO;
 import com.projects.livechatms.DTOs.UsersConnectedOutput;
 import com.projects.livechatms.domain.ChatInput;
 import com.projects.livechatms.domain.ChatOutput;
@@ -21,6 +22,7 @@ import java.util.List;
 public class LiveChatController {
 
     private final List<String> usersConnected = new ArrayList<>();
+    private final List<UserColor> colorsList = new ArrayList<>();
 
     private final SimpMessagingTemplate messagingTemplate;
     public LiveChatController() {
@@ -81,11 +83,30 @@ public class LiveChatController {
                 throw new RuntimeException("Usuário não conectado");
             }
             usersConnected.remove(user.getUser());
-            System.out.println("usuário removido: " + user.getUser());
         }
 
-        System.out.println(user.getUser());
         return new UsersConnectedOutput("users-connected-list", usersConnected);
+    }
+
+    @MessageMapping("/user-colors")
+    @SendTo("/topics/live-chat")
+    public UserColorDTO userColors(UserColor userColor){
+
+        if(userColor.getType().equals("connected-user")){
+
+            if (colorsList.stream().noneMatch(entry -> entry.getUser().equals(userColor.getUser()))) {
+                System.out.println("Adicionando cor");
+                colorsList.add(new UserColor(userColor.getUser(), userColor.getColor()));
+                System.out.println("Adicionando 1");
+            }
+
+            System.out.println("Adicionando 2");
+        } if(userColor.getType().equals("disconnected-user")){
+            colorsList.removeIf(color -> color.getUser().equals(userColor.getUser()));
+            System.out.println("removendo");
+        }
+
+        return new UserColorDTO("user-colors", colorsList);
     }
 
 
