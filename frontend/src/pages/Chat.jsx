@@ -34,7 +34,7 @@ function Chat(){
     
 
     
-    const colors = ['#FF5714', '#484D6D', '#98CE00', '#315659', '#7F7EFF']
+    const colors = ['#FF5714', '#1B998B', '#98CE00', '#315659', '#7F7EFF']
     const getRandomColor = () => {
         const randomIndex = Math.floor(Math.random() * colors.length);
         return colors[randomIndex]
@@ -42,23 +42,6 @@ function Chat(){
 
     const [userColors, setUserColors] = useState([{}])
 
-    const assignUserColor = (parsedMessage) => {
-        const userColor = getRandomColor(); // Gera uma cor aleatória
-        const messageUser = parsedMessage.user; // Usuário vindo da mensagem
-    
-        // Verifica se o tipo é 'connect' e se o usuário já não possui uma cor atribuída
-        if (parsedMessage.type === 'connect') {
-            setUserColors((prevAtt) => {
-                const existingUser = prevAtt.find((entry) => entry.user === messageUser);
-    
-                // Se o usuário já tiver uma cor, retorna o estado atual
-                if (existingUser) return prevAtt;
-    
-                // Caso contrário, adiciona uma nova cor para o usuário
-                return [...prevAtt, { user: messageUser, color: userColor }];
-            });
-        }
-    };
 
     function whenConnected(parsedMessage) {
         if(parsedMessage.type === 'simple-message'){
@@ -76,12 +59,13 @@ function Chat(){
             parsedMessage.type === 'disconnect' && parsedMessage.user === user &&
             setIsConnected(false)
 
-            // Atribuir nova cor
-            assignUserColor(parsedMessage)
             
         }
         if(parsedMessage.type === 'users-connected-list') {
             setConnectedUsers(parsedMessage.usersConnected)
+        } 
+        if(parsedMessage.type === 'user-colors') {
+            setUserColors(parsedMessage.userColors)
         } 
         
     }
@@ -109,7 +93,7 @@ function Chat(){
     useEffect(() => {
         const connectWebSocket = () => {
             // Conexão ao servidor WebSocket
-                const stompClient = Stomp.client("ws://localhost:8080/buildrun-livechat-websocket");
+                const stompClient = Stomp.client("ws://147.93.8.169:8080/buildrun-livechat-websocket");
 
 
             stompClient.connect({}, 
@@ -143,7 +127,15 @@ function Chat(){
                             "type": "connected-user" })
                     );
 
-                    
+                    stompClient.send(
+                        "/app/user-colors", 
+                        {},
+                        JSON.stringify({ 
+                            "user": user, 
+                            "color": getRandomColor(),
+                            "type": 'connected-user'
+                        })
+                    );
                 },
                 
             );
@@ -164,6 +156,18 @@ function Chat(){
                         "type": "disconnected-user" })
                 );
 
+                // Encontrar objeto no userColors que contenha o usuário e a
+                const userColorFind = userColors.find((entry) => entry.user === user)
+                stompClientRef.current.send(
+                    "/app/user-colors", 
+                    {},
+                    JSON.stringify({ 
+                        "user": userColorFind.user, 
+                        "color": userColorFind.color,
+                        "type": 'disconnected-user'
+                    })
+                );
+
                 stompClientRef.current.send("/app/exit",
                     {},
                     JSON.stringify({ 
@@ -181,9 +185,7 @@ function Chat(){
         };
     }, []);
 
-    function getConnectedUsers(){
-        
-    }
+    console.log(userColors)
     
     const sendMessage = () => {
         if (stompClientRef.current && inputMessage.trim()) {
@@ -210,7 +212,7 @@ function Chat(){
         textarea.style.height = `${Math.min(textarea.scrollHeight, 5 * 24)}px`; // Limita o crescimento a 5 linhas (ajuste conforme necessário)
     };
 
-    
+    console.log(userColors.find((entry) => entry.user === user))
 
 
     const boxMessageOfUser = () => {
@@ -250,7 +252,21 @@ function Chat(){
     }
 
     function usersOnGenerate(){
-
+        return connectedUsers.slice(0, 3).map((user, index) => (
+            user !== sessionStorage.getItem('user') && (
+                <div
+                key={user} // Certifique-se de que "user" seja único
+                className="rounded-circle bg-2 border-escura d-flex justify-content-center align-items-center fw-bold"
+                style={{
+                    width: '30px',
+                    height: '30px',
+                    position: index === 0 ? 'static' : 'absolute', // Apenas a primeira não terá "absolute"
+                    right: index === 0 ? 'auto' : `${10 * index}px`,
+                    backgroundColor: userColors.find((entry) => entry.user === user)?.color  // Ajusta a posição para as demais
+                }}
+            > <p className="m-0">{user !== null && user.charAt(0).toUpperCase()}</p> </div>
+            )
+        ));
     }
     
 
@@ -272,15 +288,15 @@ function Chat(){
                         
                     </div> */}
 
-                    <div className="w-50 d-flex justify-content-end align-items-center ">
+                    <div className="w-50 d-flex justify-content-end align-items-center position-relative">
 
-                        <div></div>
-                        <div></div>
-                        <div></div>
+                        {/* <div className="rounded-circle pt-3 bg-2 border-escura" style={{width: '25px', height: '25px'}}></div>
+                        <div className="rounded-circle pt-3 bg-2 border-escura" style={{width: '25px', height: '25px', position: 'absolute', right: '10px'}}></div>
+                        <div className="rounded-circle pt-3 bg-2 border-escura" style={{width: '25px', height: '25px', position: 'absolute', right: '20px'}}></div> */}
+                        {usersOnGenerate()}
 
                     </div>
 
-                    {usersOnGenerate()}
 
                 </header>
 
