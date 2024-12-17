@@ -93,8 +93,8 @@ function Chat(){
     useEffect(() => {
         const connectWebSocket = () => {
             // Conexão ao servidor WebSocket
-                const stompClient = Stomp.client("wss://livechat.andradedev.com.br/buildrun-livechat-websocket");
-
+                // const stompClient = Stomp.client("wss://livechat.andradedev.com.br/buildrun-livechat-websocket");
+                const stompClient = Stomp.client("ws://localhost:8080/buildrun-livechat-websocket");
 
             stompClient.connect({}, 
                 () => {
@@ -142,8 +142,56 @@ function Chat(){
 
             stompClientRef.current = stompClient; // Armazena a instância do cliente para uso posterior
         };
+
+        const handleBeforeUnload = (event) => {
+            if (stompClientRef.current) {
+                // Notifica o servidor sobre a desconexão
+                stompClientRef.current.send(
+                    "/app/listOfUsers",
+                    {},
+                    JSON.stringify({
+                        user: sessionStorage.getItem("user"),
+                        type: "disconnected-user",
+                    })
+                );
+
+                // Verifica se o usuário possui uma cor associada antes de desconectar
+                const userColorFind = userColors.find((entry) => entry.user === user);
+                if (userColorFind) {
+                    stompClientRef.current.send(
+                        "/app/user-colors",
+                        {},
+                        JSON.stringify({
+                            user: userColorFind.user,
+                            color: userColorFind.color,
+                            type: "disconnected-user",
+                        })
+                    );
+                }
+
+                stompClientRef.current.send(
+                    "/app/exit",
+                    {},
+                    JSON.stringify({
+                        user: user,
+                        type: "disconnect",
+                        message: null,
+                    })
+                );
+
+                stompClientRef.current.disconnect(() => {
+                    console.log("Desconectado do WebSocket antes de fechar.");
+                });
+            }
+
+            // Previne o comportamento padrão para fechamento (recomendado em alguns navegadores)
+            event.preventDefault();
+            event.returnValue = "";
+        };
         
         connectWebSocket();
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
 
         return () => {
             // Desconexão quando o componente é desmontado
@@ -246,8 +294,9 @@ function Chat(){
         )
     }
 
-    const handleSendMessage = () => {
+    const handleExit = () => {
         setInputMessage('')
+
         navigate('/')
     }
 
@@ -275,9 +324,9 @@ function Chat(){
             <div className="d-flex flex-column h-100-vh">
                 <header className="d-flex justify-content-between fixed-top bg-light-color p-4">
                     <div className="w-50 d-flex align-items-center">
-                        <IoMdArrowRoundBack
+                        <a href="/"><IoMdArrowRoundBack
                         onClick={() => handleSendMessage()} 
-                        style={{width: '5vh', height: '5vh', minWidth: '25px', minHeight: '25px'}} />
+                        style={{width: '5vh', height: '5vh', minWidth: '25px', minHeight: '25px'}} /></a>
                         <h1 className="fs-5 text-nowrap mb-0 ms-4">Chat Group</h1>
                     </div>
 
