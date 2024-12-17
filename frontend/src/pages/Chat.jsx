@@ -93,8 +93,9 @@ function Chat(){
     useEffect(() => {
         const connectWebSocket = () => {
             // Conexão ao servidor WebSocket
-                // const stompClient = Stomp.client("wss://livechat.andradedev.com.br/buildrun-livechat-websocket");
-                const stompClient = Stomp.client("ws://localhost:8080/buildrun-livechat-websocket");
+                const stompClient = Stomp.client("wss://livechat.andradedev.com.br/buildrun-livechat-websocket");
+
+                // const stompClient = Stomp.client("ws://localhost:8080/buildrun-livechat-websocket");
 
             stompClient.connect({}, 
                 () => {
